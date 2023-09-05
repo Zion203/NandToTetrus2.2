@@ -1,0 +1,48 @@
+
+CHIP ALU {
+    IN  
+        x[16], y[16],  // 16-bit inputs        
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute out = x + y (if 1) or x & y (if 0)
+        no; // negate the out output?
+
+    OUT 
+        out[16], // 16-bit output
+        zr, // 1 if (out == 0), 0 otherwise
+        ng; // 1 if (out < 0),  0 otherwise
+
+    PARTS:
+     //FOr zero the x
+    Mux16(a=x,b=false,sel=zx,out=zdx);
+    //To negate the x
+    Not16(in=zdx,out=notzd);
+    Mux16(a=zdx, b=notzd, sel=nx, out=ox2);
+    
+    //TO zero the y
+    Mux16(a=y,b=false,sel=zy,out=zdy);
+    //To negate y
+    Not16(in=zdy,out=notzdy);
+    Mux16(a=zdy, b=notzdy, sel=ny, out=oy2);
+    
+    //To x add y
+    
+    //to x and y
+    And16(a=ox2, b=oy2, out=xandy);
+    Add16(a=ox2, b=oy2, out=xaddy);
+    // funtion of F
+    Mux16(a=xandy, b=xaddy, sel=f, out=fxy);
+    //To negate the output
+    Not16(in=fxy, out=nout);
+    // To selec the N
+    Mux16(a=fxy, b=nout, sel=no, out=out,out[15]=ng,out[0..7]=fleft,out[8..15]=fright);
+    //For Zr
+    Or8Way(in=fleft, out=zrl);
+    Or8Way(in=fright, out=zrr);
+    Or(a=zrl, b=zrr, out=nzr);
+    // not because if 1 o/p is 0 and if 0 o/p is 1
+    Not(in=nzr, out=zr);
+
+}
